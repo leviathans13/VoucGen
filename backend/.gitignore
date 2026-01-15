@@ -8,6 +8,10 @@ uploads/*.jpg
 uploads/*.jpeg
 !uploads/.gitkeep
 prisma/migrations
+prisma/*.db
+prisma/*.db-journal
 *.log
 .DS_Store
+templates/*.png
+
 

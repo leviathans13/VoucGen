@@ -1,6 +1,7 @@
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 
 /**
  * Generate voucher image by overlaying code on template
@@ -10,6 +11,12 @@ const fs = require('fs').promises;
  */
 async function generateVoucherImage(voucherCode, voucherType) {
   try {
+    // Ensure templates and uploads directories exist
+    const templatesDir = path.join(__dirname, '../../templates');
+    const uploadsDir = path.join(__dirname, '../../uploads');
+    await fs.mkdir(templatesDir, { recursive: true });
+    await fs.mkdir(uploadsDir, { recursive: true });
+    
     // Determine template based on type
     const templateMap = {
       'Promo Edukasi': 'template-education.png',
@@ -17,7 +24,7 @@ async function generateVoucherImage(voucherCode, voucherType) {
     };
     
     const templateName = templateMap[voucherType] || 'template-default.png';
-    const templatePath = path.join(__dirname, '../../templates', templateName);
+    const templatePath = path.join(templatesDir, templateName);
     
     // Check if template exists, if not create a default one
     try {
@@ -44,9 +51,10 @@ async function generateVoucherImage(voucherCode, voucherType) {
     
     const svgBuffer = Buffer.from(svgText);
     
-    // Output path
-    const outputFilename = `voucher-${Date.now()}-${voucherCode.replace(/\//g, '-')}.png`;
-    const outputPath = path.join(__dirname, '../../uploads', outputFilename);
+    // Output path with UUID to prevent conflicts
+    const randomId = crypto.randomUUID();
+    const outputFilename = `voucher-${randomId}-${voucherCode.replace(/\//g, '-')}.png`;
+    const outputPath = path.join(uploadsDir, outputFilename);
     
     // Composite the text onto the template
     await sharp(templatePath)
@@ -83,6 +91,9 @@ async function createDefaultTemplate(templatePath, voucherType) {
       </text>
     </svg>
   `;
+  
+  // Ensure directory exists
+  await fs.mkdir(path.dirname(templatePath), { recursive: true });
   
   await sharp(Buffer.from(svg))
     .png()

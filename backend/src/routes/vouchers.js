@@ -14,38 +14,39 @@ router.post('/', async (req, res) => {
     }
     
     // Generate unique code with DB validation
-    let code;
-    let isUnique = false;
+    // Try up to 10 times to generate a unique code
+    let voucher;
     let attempts = 0;
     const maxAttempts = 10;
     
-    while (!isUnique && attempts < maxAttempts) {
-      code = generateVoucherCode(type);
-      const existing = await prisma.voucher.findUnique({
-        where: { code }
-      });
-      
-      if (!existing) {
-        isUnique = true;
+    while (!voucher && attempts < maxAttempts) {
+      try {
+        const code = generateVoucherCode(type);
+        
+        // Generate voucher image first
+        const imagePath = await generateVoucherImage(code, type);
+        
+        // Try to create voucher with unique constraint
+        voucher = await prisma.voucher.create({
+          data: {
+            code,
+            type,
+            imagePath,
+          },
+        });
+      } catch (error) {
+        // If unique constraint violation, try again
+        if (error.code === 'P2002') {
+          attempts++;
+          continue;
+        }
+        throw error;
       }
-      attempts++;
     }
     
-    if (!isUnique) {
-      return res.status(500).json({ error: 'Failed to generate unique code' });
+    if (!voucher) {
+      return res.status(500).json({ error: 'Failed to generate unique code after multiple attempts' });
     }
-    
-    // Generate voucher image
-    const imagePath = await generateVoucherImage(code, type);
-    
-    // Save to database
-    const voucher = await prisma.voucher.create({
-      data: {
-        code,
-        type,
-        imagePath,
-      },
-    });
     
     res.status(201).json(voucher);
   } catch (error) {

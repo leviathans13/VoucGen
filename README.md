@@ -59,24 +59,37 @@ cd backend
 npm install
 ```
 
-3. Set up environment variables:
-The `.env` file should contain:
+3. Set up database:
+
+**Option 1: SQLite (for development/testing)**
+The project is configured to use SQLite by default. Just run:
+```bash
+npm run prisma:generate
+npx prisma migrate dev --name init
 ```
-DATABASE_URL="your_postgresql_connection_string"
+
+**Option 2: PostgreSQL (recommended for production)**
+Update `backend/prisma/schema.prisma` to use PostgreSQL:
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+Then set up environment variables in `.env`:
+```
+DATABASE_URL="postgresql://user:password@localhost:5432/vouchgen"
 PORT=3001
 ```
 
-4. Generate Prisma client:
+Run migrations:
 ```bash
 npm run prisma:generate
-```
-
-5. Run database migrations:
-```bash
 npm run prisma:migrate
 ```
 
-6. Start the backend server:
+4. Start the backend server:
 ```bash
 npm run dev
 ```
