@@ -1,0 +1,17 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+uploads/*.png
+uploads/*.jpg
+uploads/*.jpeg
+!uploads/.gitkeep
+prisma/migrations
+prisma/*.db
+prisma/*.db-journal
+*.log
+.DS_Store
+templates/*.png
+
+
